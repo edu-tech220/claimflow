@@ -2,7 +2,6 @@ using ClaimFlow.Api.Data;
 using ClaimFlow.Api.Data.Seed;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -10,12 +9,15 @@ using Microsoft.Extensions.Options;
 namespace ClaimFlow.Api.Tests.Infrastructure;
 
 /// <summary>
-/// Boots the real API pipeline (controllers, auth, middleware) against an in-memory
-/// SQLite database instead of SQL Server, seeded with the same demo data used in dev.
+/// Boots the real API pipeline (controllers, auth, middleware) against a
+/// file-backed SQLite database instead of SQL Server, seeded with the same
+/// demo data used in dev. A real file (rather than a single shared in-memory
+/// connection) lets EF Core open independent connections per request, which
+/// an in-process ":memory:" connection cannot do under concurrent requests.
 /// </summary>
 public class ClaimFlowWebApplicationFactory : WebApplicationFactory<Program>
 {
-    private readonly SqliteConnection _connection = new("DataSource=:memory:");
+    private readonly string _databasePath = Path.Combine(Path.GetTempPath(), $"claimflow-tests-{Guid.NewGuid():N}.db");
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
@@ -31,8 +33,7 @@ public class ClaimFlowWebApplicationFactory : WebApplicationFactory<Program>
                 services.Remove(descriptor);
             }
 
-            _connection.Open();
-            services.AddDbContext<ClaimFlowDbContext>(options => options.UseSqlite(_connection));
+            services.AddDbContext<ClaimFlowDbContext>(options => options.UseSqlite($"Data Source={_databasePath}"));
 
             using var serviceProvider = services.BuildServiceProvider();
             using var scope = serviceProvider.CreateScope();
@@ -50,7 +51,7 @@ public class ClaimFlowWebApplicationFactory : WebApplicationFactory<Program>
         base.Dispose(disposing);
         if (disposing)
         {
-            _connection.Dispose();
+            File.Delete(_databasePath);
         }
     }
 }
