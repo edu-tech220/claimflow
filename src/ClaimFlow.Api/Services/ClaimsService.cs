@@ -39,11 +39,16 @@ public class ClaimsService(ClaimFlowDbContext db, ClaimAdjudicationService adjud
         {
             var claim = await LoadClaimAsync(claimId, cancellationToken);
 
-            var alreadyPaidForPolicy = await db.Claims
+            // Summed client-side: SQLite's EF Core provider cannot translate Sum() over
+            // decimal columns server-side, and the per-policy claim count is small enough
+            // that this stays cheap while remaining portable across both providers.
+            var payableAmounts = await db.Claims
                 .Where(c => c.PolicyId == claim.PolicyId
                     && c.Id != claim.Id
                     && (c.Status == ClaimStatus.Approved || c.Status == ClaimStatus.Paid))
-                .SumAsync(c => c.PayableAmount ?? 0m, cancellationToken);
+                .Select(c => c.PayableAmount)
+                .ToListAsync(cancellationToken);
+            var alreadyPaidForPolicy = payableAmounts.Sum(amount => amount ?? 0m);
 
             var adjudication = adjudicationService.Adjudicate(claim.Policy, claim, alreadyPaidForPolicy);
 

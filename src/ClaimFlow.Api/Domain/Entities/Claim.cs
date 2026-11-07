@@ -49,6 +49,10 @@ public class Claim : IHasConcurrencyVersion
 
         var claim = new Claim
         {
+            // Placeholder until the row has an Id; ClaimsService rewrites this to the
+            // friendly "CLM-NNNNNN" format right after the insert. Fits the 32-char
+            // ClaimNumber column exactly (32 hex digits).
+            ClaimNumber = Guid.NewGuid().ToString("N"),
             PolicyId = policy.Id,
             Policy = policy,
             IncidentDate = incidentDate,
