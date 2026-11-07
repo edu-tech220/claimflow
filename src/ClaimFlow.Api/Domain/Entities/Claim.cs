@@ -1,8 +1,9 @@
+using ClaimFlow.Api.Data;
 using ClaimFlow.Api.Domain.Enums;
 
 namespace ClaimFlow.Api.Domain.Entities;
 
-public class Claim
+public class Claim : IHasConcurrencyVersion
 {
     public int Id { get; set; }
     public string ClaimNumber { get; set; } = default!;
@@ -29,5 +30,5 @@ public class Claim
 
     public List<ClaimStatusHistory> History { get; set; } = new();
 
-    public byte[] RowVersion { get; set; } = default!;
+    public int Version { get; set; }
 }
