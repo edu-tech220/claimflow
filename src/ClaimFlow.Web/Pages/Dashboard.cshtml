@@ -1,0 +1,80 @@
+@page
+@model ClaimFlow.Web.Pages.DashboardModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Claims dashboard</h1>
+    <a class="btn btn-primary" asp-page="/Claims/New">File a new claim</a>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="get" class="row g-2 mb-3">
+    <div class="col-auto">
+        <select name="Status" class="form-select" onchange="this.form.submit()">
+            <option value="">All statuses</option>
+            @foreach (var status in Enum.GetNames<ClaimFlow.Web.Contracts.Claims.ClaimStatus>())
+            {
+                <option value="@status" selected="@(Model.Status == status)">@status</option>
+            }
+        </select>
+    </div>
+</form>
+
+@if (Model.Claims is { Items.Count: > 0 })
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Claim #</th>
+                <th>Policy #</th>
+                <th>Status</th>
+                <th>Claimed</th>
+                <th>Payable</th>
+                <th>Filed</th>
+                <th></th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var claim in Model.Claims.Items)
+            {
+                <tr>
+                    <td>@claim.ClaimNumber</td>
+                    <td>@claim.PolicyNumber</td>
+                    <td>
+                        <span class="badge @Model.BadgeClass(claim.Status)">@claim.Status</span>
+                        @if (claim.IsEscalated)
+                        {
+                            <span class="badge bg-danger">SLA breached</span>
+                        }
+                    </td>
+                    <td>@claim.ClaimedAmount.ToString("C")</td>
+                    <td>@(claim.PayableAmount?.ToString("C") ?? "-")</td>
+                    <td>@claim.FiledAtUtc.ToLocalTime().ToString("yyyy-MM-dd")</td>
+                    <td><a asp-page="/Claims/Details" asp-route-id="@claim.Id">View</a></td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <nav>
+        <ul class="pagination">
+            <li class="page-item @(Model.PageNumber <= 1 ? "disabled" : "")">
+                <a class="page-link" asp-page="/Dashboard" asp-route-Status="@Model.Status" asp-route-PageNumber="@(Model.PageNumber - 1)">Previous</a>
+            </li>
+            <li class="page-item disabled"><span class="page-link">Page @Model.PageNumber of @Math.Max(Model.Claims.TotalPages, 1)</span></li>
+            <li class="page-item @(Model.PageNumber >= Model.Claims.TotalPages ? "disabled" : "")">
+                <a class="page-link" asp-page="/Dashboard" asp-route-Status="@Model.Status" asp-route-PageNumber="@(Model.PageNumber + 1)">Next</a>
+            </li>
+        </ul>
+    </nav>
+}
+else if (string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <p class="text-muted">No claims found for this filter.</p>
+}

@@ -1,0 +1,59 @@
+@page
+@model ClaimFlow.Web.Pages.Policies.NewModel
+@{
+    ViewData["Title"] = "New policy";
+}
+
+<h1>New policy</h1>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+<form method="post" class="col-md-6">
+    <div class="mb-3">
+        <label asp-for="Input.PolicyNumber" class="form-label"></label>
+        <input asp-for="Input.PolicyNumber" class="form-control" placeholder="e.g. POL-AUTO-0002" />
+        <span asp-validation-for="Input.PolicyNumber" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.HolderName" class="form-label"></label>
+        <input asp-for="Input.HolderName" class="form-control" />
+        <span asp-validation-for="Input.HolderName" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.HolderEmail" class="form-label"></label>
+        <input asp-for="Input.HolderEmail" class="form-control" />
+        <span asp-validation-for="Input.HolderEmail" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.CoverageType" class="form-label"></label>
+        <select asp-for="Input.CoverageType" class="form-select" asp-items="Html.GetEnumSelectList<ClaimFlow.Web.Contracts.Policies.CoverageType>()"></select>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.CoverageLimit" class="form-label"></label>
+        <input asp-for="Input.CoverageLimit" type="number" step="0.01" class="form-control" />
+        <span asp-validation-for="Input.CoverageLimit" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.DeductibleAmount" class="form-label"></label>
+        <input asp-for="Input.DeductibleAmount" type="number" step="0.01" class="form-control" />
+        <span asp-validation-for="Input.DeductibleAmount" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.EffectiveDate" class="form-label"></label>
+        <input asp-for="Input.EffectiveDate" type="date" class="form-control" />
+        <span asp-validation-for="Input.EffectiveDate" class="text-danger"></span>
+    </div>
+    <div class="mb-3">
+        <label asp-for="Input.ExpiryDate" class="form-label"></label>
+        <input asp-for="Input.ExpiryDate" type="date" class="form-control" />
+        <span asp-validation-for="Input.ExpiryDate" class="text-danger"></span>
+    </div>
+    <button type="submit" class="btn btn-primary">Create policy</button>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}
