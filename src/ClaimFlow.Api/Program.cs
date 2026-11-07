@@ -53,13 +53,15 @@ builder.Services.AddScoped<ClaimAdjudicationService>();
 builder.Services.AddScoped<ClaimsService>();
 builder.Services.AddHostedService<ClaimEscalationBackgroundService>();
 
+var loginRateLimit = builder.Configuration.GetSection("RateLimiting").Get<RateLimitOptions>() ?? new RateLimitOptions();
+
 builder.Services.AddRateLimiter(options =>
 {
     options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     options.AddFixedWindowLimiter("login", limiter =>
     {
-        limiter.PermitLimit = 5;
-        limiter.Window = TimeSpan.FromMinutes(1);
+        limiter.PermitLimit = loginRateLimit.LoginPermitLimit;
+        limiter.Window = TimeSpan.FromSeconds(loginRateLimit.LoginWindowSeconds);
         limiter.QueueLimit = 0;
     });
 });
@@ -117,3 +119,9 @@ if (!app.Environment.IsEnvironment("Testing"))
 app.Run();
 
 public partial class Program;
+
+public class RateLimitOptions
+{
+    public int LoginPermitLimit { get; set; } = 5;
+    public int LoginWindowSeconds { get; set; } = 60;
+}
