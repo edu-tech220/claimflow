@@ -1,6 +1,30 @@
 @ClaimFlow.Api_HostAddress = http://localhost:5252
 
-GET {{ClaimFlow.Api_HostAddress}}/weatherforecast/
-Accept: application/json
+### Log in as the seeded admin
+POST {{ClaimFlow.Api_HostAddress}}/api/auth/login
+Content-Type: application/json
 
-###
+{
+  "email": "admin@claimflow.dev",
+  "password": "Admin#12345"
+}
+
+### List policies (replace {{token}} with the token from the login response)
+GET {{ClaimFlow.Api_HostAddress}}/api/policies?page=1&pageSize=20
+Authorization: Bearer {{token}}
+
+### File a claim against a seeded policy
+POST {{ClaimFlow.Api_HostAddress}}/api/claims
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "policyNumber": "POL-AUTO-0001",
+  "incidentDate": "2026-05-01",
+  "description": "Rear-ended at a red light on Main St.",
+  "claimedAmount": 2500
+}
+
+### List claims
+GET {{ClaimFlow.Api_HostAddress}}/api/claims?page=1&pageSize=20
+Authorization: Bearer {{token}}
