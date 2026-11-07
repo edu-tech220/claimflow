@@ -51,6 +51,7 @@ builder.Services.Configure<DemoAdminOptions>(builder.Configuration.GetSection(De
 builder.Services.AddScoped<JwtTokenService>();
 builder.Services.AddScoped<ClaimAdjudicationService>();
 builder.Services.AddScoped<ClaimsService>();
+builder.Services.AddHostedService<ClaimEscalationBackgroundService>();
 
 builder.Services.AddRateLimiter(options =>
 {

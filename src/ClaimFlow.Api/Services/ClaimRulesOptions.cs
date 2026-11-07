@@ -15,4 +15,9 @@ public class ClaimRulesOptions
     /// flagged as escalated by the background SLA monitor.
     /// </summary>
     public int ReviewSlaHours { get; set; } = 72;
+
+    /// <summary>
+    /// How often the background SLA monitor sweeps for overdue claims.
+    /// </summary>
+    public int EscalationSweepIntervalMinutes { get; set; } = 60;
 }
