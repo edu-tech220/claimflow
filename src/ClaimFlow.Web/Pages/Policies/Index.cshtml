@@ -1,0 +1,55 @@
+@page
+@model ClaimFlow.Web.Pages.Policies.IndexModel
+@{
+    ViewData["Title"] = "Policies";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1>Policies</h1>
+    @if (User.IsInRole("Admin"))
+    {
+        <a class="btn btn-primary" asp-page="/Policies/New">New policy</a>
+    }
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (Model.Policies is { Items.Count: > 0 })
+{
+    <table class="table table-striped align-middle">
+        <thead>
+            <tr>
+                <th>Policy #</th>
+                <th>Holder</th>
+                <th>Coverage</th>
+                <th>Limit</th>
+                <th>Deductible</th>
+                <th>Effective</th>
+                <th>Expiry</th>
+                <th>Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var policy in Model.Policies.Items)
+            {
+                <tr>
+                    <td>@policy.PolicyNumber</td>
+                    <td>@policy.HolderName</td>
+                    <td>@policy.CoverageType</td>
+                    <td>@policy.CoverageLimit.ToString("C")</td>
+                    <td>@policy.DeductibleAmount.ToString("C")</td>
+                    <td>@policy.EffectiveDate</td>
+                    <td>@policy.ExpiryDate</td>
+                    <td>@policy.Status</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+else if (string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <p class="text-muted">No policies found.</p>
+}

@@ -1,0 +1,107 @@
+@page "{id:int}"
+@using ClaimFlow.Web.Contracts.Claims
+@model ClaimFlow.Web.Pages.Claims.DetailsModel
+@{
+    ViewData["Title"] = $"Claim {Model.Claim?.ClaimNumber}";
+}
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">@Model.ErrorMessage</div>
+}
+
+@if (Model.Claim is { } claim)
+{
+    <h1>Claim @claim.ClaimNumber</h1>
+    <p class="text-muted">Policy @claim.PolicyNumber &middot; filed @claim.FiledAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</p>
+
+    <dl class="row">
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">
+            @claim.Status
+            @if (claim.IsEscalated)
+            {
+                <span class="badge bg-danger">SLA breached</span>
+            }
+        </dd>
+
+        <dt class="col-sm-3">Description</dt>
+        <dd class="col-sm-9">@claim.Description</dd>
+
+        <dt class="col-sm-3">Claimed amount</dt>
+        <dd class="col-sm-9">@claim.ClaimedAmount.ToString("C")</dd>
+
+        <dt class="col-sm-3">Payable amount</dt>
+        <dd class="col-sm-9">@(claim.PayableAmount?.ToString("C") ?? "Pending adjudication")</dd>
+
+        <dt class="col-sm-3">Assigned adjuster</dt>
+        <dd class="col-sm-9">@(claim.AssignedAdjusterName ?? "Unassigned")</dd>
+
+        @if (!string.IsNullOrEmpty(claim.DecisionNotes))
+        {
+            <dt class="col-sm-3">Decision notes</dt>
+            <dd class="col-sm-9">@claim.DecisionNotes</dd>
+        }
+    </dl>
+
+    <h2 class="h4">Actions</h2>
+    <div class="d-flex gap-2 flex-wrap mb-4">
+        @if (claim.Status == ClaimStatus.Submitted && (User.IsInRole("Adjuster") || User.IsInRole("Admin")))
+        {
+            <form method="post" asp-page-handler="Assign">
+                <button type="submit" class="btn btn-primary">Assign to me</button>
+            </form>
+        }
+
+        @if (claim.Status == ClaimStatus.UnderReview && (User.IsInRole("Adjuster") || User.IsInRole("Admin")))
+        {
+            <form method="post" asp-page-handler="Approve" class="d-flex gap-2">
+                <input asp-for="Notes" class="form-control" placeholder="Optional notes" />
+                <button type="submit" class="btn btn-success">Approve</button>
+            </form>
+            <form method="post" asp-page-handler="Reject" class="d-flex gap-2">
+                <input asp-for="Notes" class="form-control" placeholder="Rejection reason (required)" />
+                <button type="submit" class="btn btn-outline-danger">Reject</button>
+            </form>
+        }
+
+        @if (claim.Status == ClaimStatus.PendingSupervisorApproval && (User.IsInRole("Supervisor") || User.IsInRole("Admin")))
+        {
+            <form method="post" asp-page-handler="SupervisorApprove" class="d-flex gap-2">
+                <input asp-for="Notes" class="form-control" placeholder="Optional notes" />
+                <button type="submit" class="btn btn-success">Supervisor approve</button>
+            </form>
+            <form method="post" asp-page-handler="SupervisorReject" class="d-flex gap-2">
+                <input asp-for="Notes" class="form-control" placeholder="Rejection reason (required)" />
+                <button type="submit" class="btn btn-outline-danger">Supervisor reject</button>
+            </form>
+        }
+
+        @if (claim.Status == ClaimStatus.Approved && User.IsInRole("Admin"))
+        {
+            <form method="post" asp-page-handler="MarkPaid">
+                <button type="submit" class="btn btn-success">Mark as paid</button>
+            </form>
+        }
+
+        @if (claim.Status is ClaimStatus.Paid or ClaimStatus.Rejected or ClaimStatus.Closed)
+        {
+            <span class="text-muted align-self-center">No further actions available.</span>
+        }
+    </div>
+
+    <h2 class="h4">History</h2>
+    <ul class="list-group">
+        @foreach (var entry in Model.History)
+        {
+            <li class="list-group-item">
+                <strong>@entry.FromStatus &rarr; @entry.ToStatus</strong>
+                <span class="text-muted">&middot; @entry.ChangedAtUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm")</span>
+                @if (!string.IsNullOrEmpty(entry.Notes))
+                {
+                    <div>@entry.Notes</div>
+                }
+            </li>
+        }
+    </ul>
+}
